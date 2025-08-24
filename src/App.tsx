@@ -10,7 +10,7 @@ import { TodoModal } from './components/TodoModal';
 //import { todo } from 'node:test';
 import { Loader } from './components/Loader';
 import { Todo } from './types/Todo';
-import { getTodos } from './api';
+import { getTodos, getUser } from './api';
 
 //import users from '../public/api/users.json';
 
@@ -19,6 +19,8 @@ export const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(false);
 
   /* eslint-disable */
   const [statusFilter, setStatusFilter] = useState<
@@ -42,15 +44,17 @@ export const App: React.FC = () => {
 
   const handleShowTodo = async (todo: Todo) => {
     setIsModalOpen(true);
-    setSelectedTodo({ ...todo, user: undefined }); // mostra loader
+    setSelectedTodo(todo);
+    setSelectedUser(null);
+    setUserLoading(true);
 
     try {
       const user = await getUser(todo.userId);
-
-      setSelectedTodo({ ...todo, user });
+      setSelectedUser(user);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error fetching user:', error);
+    } finally {
+      setUserLoading(false);
     }
   };
 
@@ -59,12 +63,9 @@ export const App: React.FC = () => {
       try {
         setLoading(true);
         const todosFromApi = await getTodos();
-
         setTodos(todosFromApi);
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Error fetching todos:', error);
-        // eslint-disable-next-line no-console
       } finally {
         setLoading(false);
       }
@@ -91,7 +92,6 @@ export const App: React.FC = () => {
 
             <div className="block">
               {loading && <Loader />}
-
               {!loading && todos.length > 0 && (
                 <TodoList todos={filteredTodos} onShow={handleShowTodo} />
               )}
@@ -104,6 +104,8 @@ export const App: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         todo={selectedTodo}
+        user={selectedUser}
+        loading={userLoading}
       />
     </>
   );
