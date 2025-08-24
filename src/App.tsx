@@ -12,7 +12,7 @@ import { Loader } from './components/Loader';
 import { Todo } from './types/Todo';
 import { getTodos } from './api';
 
-import users from '../public/api/users.json';
+//import users from '../public/api/users.json';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -20,11 +20,38 @@ export const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
 
-  const handleShowTodo = (todo: Todo) => {
-    const user = users.find(u => u.id === todo.userId);
+  /* eslint-disable */
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'completed'
+  >('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  /* eslint-disable */
 
-    setSelectedTodo({ ...todo, user });
+  const filteredTodos = todos.filter(todo => {
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && !todo.completed) ||
+      (statusFilter === 'completed' && todo.completed);
+
+    const matchesQuery = todo.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    return matchesStatus && matchesQuery;
+  });
+
+  const handleShowTodo = async (todo: Todo) => {
     setIsModalOpen(true);
+    setSelectedTodo({ ...todo, user: undefined }); // mostra loader
+
+    try {
+      const user = await getUser(todo.userId);
+
+      setSelectedTodo({ ...todo, user });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching user:', error);
+    }
   };
 
   useEffect(() => {
@@ -54,14 +81,19 @@ export const App: React.FC = () => {
             <h1 className="title">Todos:</h1>
 
             <div className="block">
-              <TodoFilter />
+              <TodoFilter
+                status={statusFilter}
+                query={searchQuery}
+                onStatusChange={setStatusFilter}
+                onQueryChange={setSearchQuery}
+              />
             </div>
 
             <div className="block">
               {loading && <Loader />}
 
               {!loading && todos.length > 0 && (
-                <TodoList todos={todos} onShow={handleShowTodo} />
+                <TodoList todos={filteredTodos} onShow={handleShowTodo} />
               )}
             </div>
           </div>

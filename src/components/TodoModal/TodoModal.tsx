@@ -6,15 +6,9 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   todo: Todo | null;
-  loading?: boolean;
 };
 
-export const TodoModal: React.FC<Props> = ({
-  isOpen,
-  onClose,
-  todo,
-  loading = false,
-}) => {
+export const TodoModal: React.FC<Props> = ({ isOpen, onClose, todo }) => {
   if (!isOpen) {
     return null;
   }
@@ -23,7 +17,7 @@ export const TodoModal: React.FC<Props> = ({
     <div className={`modal ${isOpen ? 'is-active' : ''}`} data-cy="modal">
       <div className="modal-background" onClick={onClose} />
 
-      {loading || !todo ? (
+      {!todo?.user ? (
         <Loader />
       ) : (
         <div className="modal-card">
@@ -34,8 +28,6 @@ export const TodoModal: React.FC<Props> = ({
             >
               Todo #{todo.id}
             </div>
-
-            {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
             <button
               type="button"
               className="delete"
@@ -48,10 +40,9 @@ export const TodoModal: React.FC<Props> = ({
             <p className="block" data-cy="modal-title">
               {todo.title}
             </p>
-
             <p className="block" data-cy="modal-user">
               <strong className="has-text-danger">Planned</strong> by{' '}
-              <a href={`mailto:${todo.user?.email}`}>{todo.user?.name}</a>
+              <a href={`mailto:${todo.user.email}`}>{todo.user.name}</a>
             </p>
           </div>
         </div>
